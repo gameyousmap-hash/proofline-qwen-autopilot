@@ -1,0 +1,30 @@
+edition: 3.0.0
+name: proofline-qwen-autopilot
+access: default
+
+resources:
+  prooflineAnalysis:
+    component: fc3
+    props:
+      region: ap-northeast-1
+      functionName: proofline-qwen-analysis
+      description: Evidence-constrained Qwen analysis for Proofline Autopilot
+      runtime: nodejs20
+      handler: index.handler
+      code: ./
+      timeout: 120
+      memorySize: 1024
+      environmentVariables:
+        ALIBABA_CLOUD_REGION: ap-northeast-1
+        QWEN_BASE_URL: ${env.QWEN_BASE_URL}
+        QWEN_API_KEY: ${env.QWEN_API_KEY}
+        QWEN_MODEL: ${env.QWEN_MODEL}
+        PROOFLINE_SERVICE_SECRET: ${env.PROOFLINE_SERVICE_SECRET}
+      triggers:
+        - triggerName: public-http
+          triggerType: http
+          triggerConfig:
+            authType: anonymous
+            methods:
+              - POST
+
