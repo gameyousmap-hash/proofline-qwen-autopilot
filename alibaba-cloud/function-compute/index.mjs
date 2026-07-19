@@ -38,7 +38,7 @@ export const handler = async (event) => {
 
     const baseUrl = String(process.env.QWEN_BASE_URL || "").replace(/\/$/, "");
     const apiKey = process.env.QWEN_API_KEY || process.env.DASHSCOPE_API_KEY;
-    const model = process.env.QWEN_MODEL || "qwen3.7-max";
+    const model = process.env.QWEN_MODEL || "qwen3.7-plus";
     if (!baseUrl || !apiKey) return httpResponse(500, { error: "Qwen Cloud is not configured" });
 
     const response = await fetch(`${baseUrl}/chat/completions`, {
@@ -47,6 +47,8 @@ export const handler = async (event) => {
       body: JSON.stringify({
         model,
         temperature: 0.1,
+        max_tokens: 1400,
+        enable_thinking: false,
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: systemPrompt },

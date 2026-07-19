@@ -98,7 +98,7 @@ Configure a Qwen Cloud international API key:
 ```env
 QWEN_API_KEY=your_model_studio_api_key
 QWEN_BASE_URL=https://dashscope-intl.aliyuncs.com/compatible-mode/v1
-QWEN_MODEL=qwen3.7-max
+QWEN_MODEL=qwen3.7-plus
 ```
 
 For the production Alibaba Cloud path, deploy `alibaba-cloud/function-compute` and configure:
