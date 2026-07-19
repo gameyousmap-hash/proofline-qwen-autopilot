@@ -32,11 +32,11 @@ export type GroundedAnalysis = {
 type RawAnalysis = Omit<GroundedAnalysis, "engine" | "model" | "provider">;
 
 const systemPrompt = [
-  "あなたは日本の国会会議録を扱う、非党派の調査エージェントです。",
+  "あなたは日本の国会会議録を調べる、非党派の調査エージェントです。",
   "与えられた公式発言だけを根拠に分析し、外部知識や推測を追加しないでください。",
-  "各論点は必ず根拠となるrecordIdを付け、原文で確認できない内容は未回答事項へ回してください。",
-  "賛否を断定せず、発言者が何を質問・主張・懸念・回答したかを区別してください。",
-  "日本語で、一般の読者が30秒で理解できる明瞭な文にしてください。",
+  "各要点には必ず根拠となるrecordIdを付け、本文で確認できない内容は未回答事項へ回してください。",
+  "発言者が何を質問・主張・回答したかを区別してください。",
+  "日本語で簡潔に、一般の読者が30秒で理解できる明瞭な文章にしてください。",
   "JSONだけを返し、Markdownのコードブロックは使わないでください。",
 ].join("\n");
 
@@ -57,21 +57,33 @@ const outputContract = {
 
 function parseJsonContent(value: string): RawAnalysis {
   const normalized = value.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
-  return JSON.parse(normalized) as RawAnalysis;
+  try {
+    return JSON.parse(normalized) as RawAnalysis;
+  } catch {
+    const start = normalized.indexOf("{");
+    const end = normalized.lastIndexOf("}");
+    if (start < 0 || end <= start) throw new Error("Qwen returned no JSON object.");
+    return JSON.parse(normalized.slice(start, end + 1)) as RawAnalysis;
+  }
 }
 
 function validateAnalysis(parsed: RawAnalysis, records: GroundedRecord[]) {
   const knownIds = new Set(records.map((record) => record.id));
   const keyPoints = Array.isArray(parsed.keyPoints)
     ? parsed.keyPoints
-      .map((point) => ({ ...point, recordIds: Array.isArray(point.recordIds) ? point.recordIds.filter((id) => knownIds.has(id)) : [] }))
+      .map((point) => ({
+        ...point,
+        recordIds: Array.isArray(point.recordIds) ? point.recordIds.filter((id) => knownIds.has(id)) : [],
+      }))
       .filter((point) => point.recordIds.length > 0)
       .slice(0, 4)
     : [];
   if (!keyPoints.length) throw new Error("Qwen analysis did not return a valid evidence ID.");
   return {
     ...parsed,
-    evidenceStrength: (["強い", "限定的", "不十分"].includes(parsed.evidenceStrength) ? parsed.evidenceStrength : "限定的") as RawAnalysis["evidenceStrength"],
+    evidenceStrength: (["強い", "限定的", "不十分"].includes(parsed.evidenceStrength)
+      ? parsed.evidenceStrength
+      : "限定的") as RawAnalysis["evidenceStrength"],
     unresolvedQuestions: Array.isArray(parsed.unresolvedQuestions) ? parsed.unresolvedQuestions.slice(0, 4) : [],
     keyPoints,
   };
@@ -86,7 +98,7 @@ function sourcePacket(records: GroundedRecord[]) {
     meeting: record.meeting,
     date: record.date,
     officialUrl: record.url,
-    speech: record.text.slice(0, 3600),
+    speech: record.text.slice(0, 1600),
   }));
 }
 
@@ -97,11 +109,17 @@ async function analyzeOnFunctionCompute(keyword: string, sourceTitle: string, re
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      ...(process.env.ALIBABA_AUTOPILOT_SECRET ? { "x-proofline-service-key": process.env.ALIBABA_AUTOPILOT_SECRET } : {}),
+      ...(process.env.ALIBABA_AUTOPILOT_SECRET
+        ? { "x-proofline-service-key": process.env.ALIBABA_AUTOPILOT_SECRET }
+        : {}),
     },
     body: JSON.stringify({ keyword, sourceTitle, records: sourcePacket(records), outputContract }),
   });
-  if (!response.ok) throw new Error(`Function Compute returned ${response.status}.`);
+  if (!response.ok) {
+    const errorPayload = await response.json().catch(() => null) as { error?: string; detail?: string } | null;
+    const detail = errorPayload?.detail || errorPayload?.error || "unknown error";
+    throw new Error(`Function Compute returned ${response.status}: ${detail}`);
+  }
   const payload = await response.json() as { analysis?: RawAnalysis; model?: string } & RawAnalysis;
   const parsed = payload.analysis || payload;
   return {
@@ -123,12 +141,15 @@ async function analyzeDirectly(keyword: string, sourceTitle: string, records: Gr
     body: JSON.stringify({
       model,
       temperature: 0.1,
-      max_tokens: 1400,
+      max_tokens: 1200,
       enable_thinking: false,
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: systemPrompt },
-        { role: "user", content: `調査テーマ: ${keyword}\n記事または入力タイトル: ${sourceTitle}\n\n出力JSON契約:\n${JSON.stringify(outputContract)}\n\n公式会議録データ:\n${JSON.stringify(sourcePacket(records))}` },
+        {
+          role: "user",
+          content: `調査テーマ: ${keyword}\n記事または入力タイトル: ${sourceTitle}\n\n出力JSON仕様:\n${JSON.stringify(outputContract)}\n\n公式会議録データ:\n${JSON.stringify(sourcePacket(records))}`,
+        },
       ],
     }),
   });
@@ -144,10 +165,15 @@ async function analyzeDirectly(keyword: string, sourceTitle: string, records: Gr
   };
 }
 
-export async function createQwenGroundedAnalysis(keyword: string, sourceTitle: string, records: GroundedRecord[]): Promise<GroundedAnalysis | null> {
+export async function createQwenGroundedAnalysis(
+  keyword: string,
+  sourceTitle: string,
+  records: GroundedRecord[],
+): Promise<GroundedAnalysis | null> {
   if (!records.length) return null;
   try {
-    return await analyzeOnFunctionCompute(keyword, sourceTitle, records) || await analyzeDirectly(keyword, sourceTitle, records);
+    return await analyzeOnFunctionCompute(keyword, sourceTitle, records)
+      || await analyzeDirectly(keyword, sourceTitle, records);
   } catch (error) {
     console.error("Qwen grounded analysis failed", error);
     return null;

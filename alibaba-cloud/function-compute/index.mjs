@@ -23,7 +23,15 @@ function readRequest(event) {
 }
 
 function extractJson(value) {
-  return JSON.parse(String(value || "").trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, ""));
+  const normalized = String(value || "").trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+  try {
+    return JSON.parse(normalized);
+  } catch {
+    const start = normalized.indexOf("{");
+    const end = normalized.lastIndexOf("}");
+    if (start < 0 || end <= start) throw new Error("Qwen returned no JSON object");
+    return JSON.parse(normalized.slice(start, end + 1));
+  }
 }
 
 export const handler = async (event) => {
@@ -47,7 +55,7 @@ export const handler = async (event) => {
       body: JSON.stringify({
         model,
         temperature: 0.1,
-        max_tokens: 1400,
+        max_tokens: 1200,
         enable_thinking: false,
         response_format: { type: "json_object" },
         messages: [
@@ -58,7 +66,9 @@ export const handler = async (event) => {
     });
     if (!response.ok) return httpResponse(502, { error: "Qwen Cloud request failed", status: response.status });
     const payload = await response.json();
-    const analysis = extractJson(payload.choices?.[0]?.message?.content);
+    const content = payload.choices?.[0]?.message?.content;
+    if (!content) return httpResponse(502, { error: "Qwen Cloud returned no content" });
+    const analysis = extractJson(content);
     return httpResponse(200, {
       analysis,
       model,
@@ -67,6 +77,9 @@ export const handler = async (event) => {
     });
   } catch (error) {
     console.error(error);
-    return httpResponse(500, { error: "Autopilot analysis failed" });
+    return httpResponse(500, {
+      error: "Autopilot analysis failed",
+      detail: error instanceof Error ? error.message.slice(0, 180) : "Unknown error",
+    });
   }
 };
