@@ -93,11 +93,11 @@ copy .env.example .env.local
 npm run dev
 ```
 
-Configure a Tokyo Model Studio workspace:
+Configure a Qwen Cloud international API key:
 
 ```env
 QWEN_API_KEY=your_model_studio_api_key
-QWEN_BASE_URL=https://YOUR_WORKSPACE_ID.ap-northeast-1.maas.aliyuncs.com/compatible-mode/v1
+QWEN_BASE_URL=https://dashscope-intl.aliyuncs.com/compatible-mode/v1
 QWEN_MODEL=qwen3.7-plus
 ```
 
@@ -127,4 +127,3 @@ Proofline does not decide whether a political claim is true, replace legal or jo
 ## License
 
 MIT
-
