@@ -11,6 +11,7 @@
     "start": "vinext start",
     "test": "npm run build && node --test tests/rendered-html.test.mjs tests/topic-extraction.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
+    "deploy:alibaba": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/deploy-function-compute.ps1",
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {

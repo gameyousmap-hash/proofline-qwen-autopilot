@@ -108,6 +108,12 @@ ALIBABA_AUTOPILOT_URL=https://your-function-compute-http-trigger
 ALIBABA_AUTOPILOT_SECRET=the_same_secret_used_by_the_function
 ```
 
+On Windows, after configuring the `default` Serverless Devs access alias, the repository helper imports only the required values from `.env.local` and deploys the Singapore Function Compute backend without printing secrets:
+
+```powershell
+npm run deploy:alibaba
+```
+
 Run verification:
 
 ```bash

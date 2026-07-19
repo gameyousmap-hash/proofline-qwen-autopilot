@@ -15,6 +15,11 @@ set PROOFLINE_SERVICE_SECRET=a_long_random_value
 s deploy
 ```
 
+On Windows, once the Serverless Devs `default` access alias is configured, run
+`npm run deploy:alibaba` from the repository root. The helper loads the four
+required values from `.env.local`, does not print them, and deploys with
+`--assume-yes`.
+
 Copy the deployed HTTP trigger URL into `ALIBABA_AUTOPILOT_URL` in the web application and use the same secret as `ALIBABA_AUTOPILOT_SECRET`.
 
 No Alibaba Cloud access key or Qwen API key is committed to the repository. The HTTP trigger is protected at the application layer with `x-proofline-service-key`; production deployments should additionally enable an Alibaba Cloud API Gateway or private network policy.
