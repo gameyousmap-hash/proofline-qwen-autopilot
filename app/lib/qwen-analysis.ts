@@ -107,7 +107,7 @@ async function analyzeOnFunctionCompute(keyword: string, sourceTitle: string, re
   return {
     ...validateAnalysis(parsed, records),
     engine: "qwen" as const,
-    model: payload.model || process.env.QWEN_MODEL || "qwen3.7-plus",
+    model: payload.model || process.env.QWEN_MODEL || "qwen3.7-max",
     provider: "alibaba-function-compute" as const,
   };
 }
@@ -116,7 +116,7 @@ async function analyzeDirectly(keyword: string, sourceTitle: string, records: Gr
   const apiKey = process.env.QWEN_API_KEY || process.env.DASHSCOPE_API_KEY;
   const baseUrl = process.env.QWEN_BASE_URL?.replace(/\/$/, "");
   if (!apiKey || !baseUrl) return null;
-  const model = process.env.QWEN_MODEL || "qwen3.7-plus";
+  const model = process.env.QWEN_MODEL || "qwen3.7-max";
   const response = await fetch(`${baseUrl}/chat/completions`, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
@@ -151,4 +151,3 @@ export async function createQwenGroundedAnalysis(keyword: string, sourceTitle: s
     return null;
   }
 }
-

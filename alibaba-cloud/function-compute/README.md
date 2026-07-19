@@ -10,7 +10,7 @@ Requirements: Alibaba Cloud account, Serverless Devs CLI, a Model Studio workspa
 cd alibaba-cloud/function-compute
 set QWEN_BASE_URL=https://dashscope-intl.aliyuncs.com/compatible-mode/v1
 set QWEN_API_KEY=your_model_studio_key
-set QWEN_MODEL=qwen3.7-plus
+set QWEN_MODEL=qwen3.7-max
 set PROOFLINE_SERVICE_SECRET=a_long_random_value
 s deploy
 ```

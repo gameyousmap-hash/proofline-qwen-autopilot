@@ -38,7 +38,7 @@ export const handler = async (event) => {
 
     const baseUrl = String(process.env.QWEN_BASE_URL || "").replace(/\/$/, "");
     const apiKey = process.env.QWEN_API_KEY || process.env.DASHSCOPE_API_KEY;
-    const model = process.env.QWEN_MODEL || "qwen3.7-plus";
+    const model = process.env.QWEN_MODEL || "qwen3.7-max";
     if (!baseUrl || !apiKey) return httpResponse(500, { error: "Qwen Cloud is not configured" });
 
     const response = await fetch(`${baseUrl}/chat/completions`, {
@@ -68,4 +68,3 @@ export const handler = async (event) => {
     return httpResponse(500, { error: "Autopilot analysis failed" });
   }
 };
-
