@@ -60,9 +60,40 @@ if (-not $serverlessPath) {
 Write-Host "Deploying Proofline analysis to Alibaba Cloud Function Compute (ap-southeast-1)..."
 Push-Location $functionRoot
 try {
-  & $serverlessPath -a $Access deploy -y
-  if ($LASTEXITCODE -ne 0) {
-    throw "Serverless Devs deployment failed with exit code $LASTEXITCODE"
+  $previousErrorActionPreference = $ErrorActionPreference
+  $ErrorActionPreference = "Continue"
+  try {
+    $deployOutput = @(& $serverlessPath -a $Access deploy -y 2>&1)
+    $deployExitCode = $LASTEXITCODE
+  }
+  finally {
+    $ErrorActionPreference = $previousErrorActionPreference
+  }
+  $deployText = [string]::Join([Environment]::NewLine, @(
+    $deployOutput | ForEach-Object { $_.ToString() }
+  ))
+
+  if ($deployExitCode -ne 0) {
+    $safeOutput = $deployText
+    foreach ($key in $requiredKeys) {
+      $secretValue = (Get-Item -LiteralPath "Env:$key" -ErrorAction SilentlyContinue).Value
+      if ($secretValue) {
+        $safeOutput = $safeOutput.Replace($secretValue, "[REDACTED]")
+      }
+    }
+    if ($safeOutput) {
+      Write-Error $safeOutput
+    }
+    throw "Serverless Devs deployment failed with exit code $deployExitCode"
+  }
+
+  $publicUrl = [regex]::Match(
+    $deployText,
+    'https://[a-zA-Z0-9.-]+\.fcapp\.run'
+  ).Value
+  Write-Host "Function Compute deployment completed."
+  if ($publicUrl) {
+    Write-Host "Public function URL: $publicUrl"
   }
 }
 finally {
