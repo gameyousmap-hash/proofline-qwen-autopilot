@@ -6,6 +6,13 @@ Proofline Qwen Autopilot researches Japanese policy and parliamentary activity e
 
 The core principle is simple: **an autonomous agent may do the legwork, but it must not manufacture evidence or publish past the reviewer.**
 
+## Hackathon submission links
+
+- **Track:** Autopilot Agent
+- **Live application:** [Proofline Qwen Autopilot](https://proofline-qwen-autopilot.hello-you-smap.chatgpt.site)
+- **Alibaba Cloud deployment proof:** [Function Compute definition](alibaba-cloud/function-compute/s.yaml) and [deployed function handler](alibaba-cloud/function-compute/index.mjs)
+- **Architecture:** the diagram below and the detailed [architecture document](docs/architecture.md)
+
 ## Why this is an Autopilot Agent
 
 The input is often ambiguous: a headline may use a nickname instead of a formal bill name, mix political claims with facts, or omit the relevant committee. Proofline resolves that ambiguity through a multi-step workflow instead of a single chat response:
