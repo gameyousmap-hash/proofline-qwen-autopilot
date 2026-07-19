@@ -63,7 +63,7 @@ export const handler = async (event) => {
       analysis,
       model,
       runtime: "Alibaba Cloud Function Compute",
-      region: process.env.ALIBABA_CLOUD_REGION || "ap-northeast-1",
+      region: process.env.ALIBABA_CLOUD_REGION || "ap-southeast-1",
     });
   } catch (error) {
     console.error(error);

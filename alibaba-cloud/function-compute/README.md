@@ -1,10 +1,10 @@
 # Alibaba Cloud deployment evidence
 
-This directory is the deployable analysis backend used by Proofline Autopilot. The web application retrieves official Diet records, then sends only the normalized evidence packet to this Alibaba Cloud Function Compute function. The function invokes Qwen on Alibaba Cloud Model Studio and returns an evidence-ID-constrained JSON analysis.
+This directory is the deployable analysis backend used by Proofline Autopilot. The web application retrieves official Diet records, then sends only the normalized evidence packet to this Alibaba Cloud Function Compute function. The function invokes Qwen Cloud through its international OpenAI-compatible endpoint and returns an evidence-ID-constrained JSON analysis.
 
 ## Deploy
 
-Requirements: Alibaba Cloud account, Serverless Devs CLI, a Model Studio workspace/API key in the selected region, and Function Compute enabled.
+Requirements: Alibaba Cloud account, Serverless Devs CLI v3, a Qwen Cloud international API key, and Function Compute enabled in Singapore (`ap-southeast-1`).
 
 ```bash
 cd alibaba-cloud/function-compute
